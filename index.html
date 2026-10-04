@@ -4004,7 +4004,7 @@ async function finalizeTransactionAndPrint() {
     return;
   }
 
- // 1. خصم الكميات مباشرة من رقم التشغيلة المحددة في السلة
+  // 1. خصم الكميات وتحديث الرصيد محلياً وسحابياً فوراً
   for (const item of cart) {
     let batch = await db.batches.get(item.batchId);
     if (!batch) {
@@ -4013,8 +4013,10 @@ async function finalizeTransactionAndPrint() {
     if (batch) {
       const updatedQty = Math.max(0, batch.totalTablets - item.tabletsDeducted);
       await db.batches.update(batch.id, { totalTablets: updatedQty });
+      
+      // ✅ تحديث الرصيد المنقوص في السحابة ليتزامن مع الهاتف فوراً
       if (typeof syncBatchToCloud === "function") {
-        syncBatchToCloud({ ...batch, totalTablets: updatedQty });
+        await syncBatchToCloud({ ...batch, totalTablets: updatedQty });
       }
     }
   }
@@ -4194,7 +4196,7 @@ async function processReturnInvoice(invoiceNo) {
   const inv = await db.invoices.where("invoiceNo").equals(invoiceNo).first();
   if (!inv || inv.status === "مرتجع") return;
 
-  // 1. إعادة الأقراص والكميات لرصيد المخزن وفق التشغيلات الفعلية المسجلة بالفاتورة
+  // 1. إعادة الأقراص والكميات لرصيد المخزن وفق التشغيلات الفعلية المسجلة بالفاتورة محلياً وسحابياً
   if (inv.items && Array.isArray(inv.items)) {
     for (const it of inv.items) {
       if (it.deductedBatches && it.deductedBatches.length > 0) {
@@ -4209,7 +4211,9 @@ async function processReturnInvoice(invoiceNo) {
           if (batch) {
             const updatedTablets = batch.totalTablets + d.deductedTablets;
             await db.batches.update(batch.id, { totalTablets: updatedTablets });
-            syncBatchToCloud({ ...batch, totalTablets: updatedTablets });
+            if (typeof syncBatchToCloud === "function") {
+              await syncBatchToCloud({ ...batch, totalTablets: updatedTablets });
+            }
           }
         }
       } else {
@@ -4220,7 +4224,9 @@ async function processReturnInvoice(invoiceNo) {
         if (batch) {
           const updatedTablets = batch.totalTablets + (it.tabletsDeducted || it.qty);
           await db.batches.update(batch.id, { totalTablets: updatedTablets });
-          syncBatchToCloud({ ...batch, totalTablets: updatedTablets });
+          if (typeof syncBatchToCloud === "function") {
+            await syncBatchToCloud({ ...batch, totalTablets: updatedTablets });
+          }
         }
       }
     }
@@ -5229,13 +5235,69 @@ async function syncExpenseToCloud(expenseData) {
   }
 }
 
-// 5. الاستماع اللحظي (Realtime) لمزامنة الفواتير والمصروفات بين الأجهزة فوراً
+// 5. الاستماع اللحظي الشامل (Realtime) للأدوية، الأرصدة، الفواتير والمصروفات بين الأجهزة
 function startCloudLiveSync() {
   if (!sqlClient) return;
 
   // إزالة أي اشتراكات سابقة لمنع التكرار عند إعادة فتح الصفحة
   sqlClient.removeAllChannels();
 
+  // أ. مزامنة بيانات الأدوية والأسعار وأماكن الرفوف لحظياً
+  sqlClient
+    .channel('realtime_medicines')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'medicines' }, async (payload) => {
+      if (payload.eventType === 'DELETE') {
+        if (payload.old && payload.old.code) {
+          await db.medicines.delete(payload.old.code);
+        }
+      } else if (payload.new) {
+        const m = payload.new;
+        await db.medicines.put({
+          code: m.code,
+          barcode: sanitizeBarcode(m.barcode),
+          name: m.name,
+          scientificName: m.scientific_name || '',
+          category: m.category || 'أدوية بشرية',
+          shelfLocation: m.shelf_location || 'المستودع الرئيسي',
+          stripsPerBox: m.strips_per_box || 2,
+          tabletsPerStrip: m.tablets_per_strip || 10,
+          boxPrice: Number(m.box_price || 0),
+          boxCost: Number(m.box_cost || 0),
+          minSafetyStock: Number(m.min_safety_stock || 10),
+          preferredSupplier: m.preferred_supplier || 'الموزع المعتمد',
+          bonusScheme: m.bonus_scheme || '-',
+          isControlled: !!m.is_controlled
+        });
+      }
+      if (typeof loadAllMedicinesStock === 'function') loadAllMedicinesStock(false);
+    })
+    .subscribe();
+
+  // ب. مزامنة الأرصدة والتشغيلات والتعديلات المخزنية لحظياً
+  sqlClient
+    .channel('realtime_batches')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'batches' }, async (payload) => {
+      if (payload.eventType === 'DELETE') {
+        if (payload.old && payload.old.id) {
+          await db.batches.delete(payload.old.id);
+        }
+      } else if (payload.new) {
+        const b = payload.new;
+        await db.batches.put({
+          id: b.id,
+          medCode: b.med_code,
+          batchNo: b.batch_no,
+          expiryDate: b.expiry_date,
+          totalTablets: Number(b.total_tablets || 0),
+          costPerBox: Number(b.cost_per_box || 0),
+          retailPrice: Number(b.retail_price || 0)
+        });
+      }
+      if (typeof loadAllMedicinesStock === 'function') loadAllMedicinesStock(false);
+    })
+    .subscribe();
+
+  // ج. مزامنة الفواتير
   sqlClient
     .channel('realtime_invoices')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices' }, async (payload) => {
@@ -5263,6 +5325,7 @@ function startCloudLiveSync() {
     })
     .subscribe();
 
+  // د. مزامنة المصروفات
   sqlClient
     .channel('realtime_expenses')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'expenses' }, async (payload) => {
