@@ -245,7 +245,7 @@
       </div>
 
       <!-- تبويبات النظام الرئيسية -->
-      <nav class="hidden xl:flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold">
+      <nav class="!hidden xl:flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold">
         <button onclick="switchView('posView')" id="tab-posView" class="view-tab px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-sm flex items-center gap-1.5 transition-all">
           <i class="fa-solid fa-cash-register"></i> نقاط البيع
         </button>
@@ -463,41 +463,51 @@
       <section class="lg:col-span-7 flex flex-col h-full">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col flex-grow min-h-[580px]">
           
-          <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
+<!-- ==================== شريط الأدوات السريع أعلى الفاتورة (Quick Action Bar) ==================== -->
+          <div class="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2 bg-slate-50/50 dark:bg-slate-800/20">
+            
+            <!-- عنوان الفاتورة ورقمها النشط -->
             <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-brand-600 dark:text-brand-400">
-                <i class="fa-solid fa-file-invoice text-base"></i>
+              <div class="w-8 h-8 rounded-xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 flex items-center justify-center font-bold">
+                <i class="fa-solid fa-file-invoice text-sm"></i>
               </div>
               <div>
-                <div class="flex items-center gap-2">
-                  <h3 class="font-bold text-slate-900 dark:text-white text-xs">الفاتورة النشطة</h3>
-                  <span id="invNumberLabel" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">INV-000000</span>
+                <div class="flex items-center gap-1.5">
+                  <h3 class="font-black text-slate-900 dark:text-white text-xs">الفاتورة النشطة</h3>
+                  <span id="invNumberLabel" class="text-[10px] font-mono font-black px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">INV-000000</span>
                 </div>
-                <p class="text-[10px] text-slate-400">منظومة الإيصال والبيع الصيدلاني المعتمدة</p>
               </div>
             </div>
 
-            <div class="flex items-center gap-2">
-              <button onclick="openRecentInvoicesModal()" class="text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 px-3 py-1.5 rounded-xl border border-indigo-300 dark:border-indigo-800/80 flex items-center gap-1.5 transition-all shadow-sm">
-                <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i>
-                <span>فواتير آخر 3 أيام (المرتجع)</span>
+            <!-- أزرار الإجراءات السريعة (طلب العميل: Z والمصاريف والمرتجع) -->
+            <div class="flex items-center gap-1.5">
+              
+              <!-- 1. زر تقفيل الوردية Z البارز بلون أحمر -->
+              <button type="button" onclick="openZReportModal()" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95" title="تقفيل الوردية الحالية وطباعة تقرير Z">
+                <i class="fa-solid fa-receipt"></i>
+                <span>تقفيل الوردية (Z)</span>
               </button>
 
-              <!-- التعديل رقم 1: استبدال زر سحب الدرج بزر المصاريف والسبب والنوع -->
-              <button onclick="openExpenseModal()" class="text-xs font-bold text-amber-700 dark:text-amber-300 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 px-3 py-1.5 rounded-xl border border-amber-300 dark:border-amber-800/80 flex items-center gap-1.5 transition-all shadow-sm" title="تسجيل ومتابعة المصاريف والسبب والنوع">
-                <i class="fa-solid fa-receipt text-amber-600"></i>
-                <span>المصاريف (النوع والسبب)</span>
-                <span id="shiftExpensesBadge" class="bg-amber-200 dark:bg-amber-900/80 px-1.5 py-0.5 rounded font-mono text-[10px] text-amber-900 dark:text-amber-100">0.00 ج.م</span>
+              <!-- 2. زر سحب المصروف السريع مع عرض إجمالي مصروفات الشيفت -->
+              <button type="button" onclick="openExpenseModal()" class="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-800 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm" title="سحب مصروف وسلفة من الدرج">
+                <i class="fa-solid fa-hand-holding-dollar text-amber-600"></i>
+                <span>المصاريف</span>
+                <span id="shiftExpensesBadge" class="bg-amber-200 dark:bg-amber-900 px-1.5 py-0.5 rounded font-mono text-[9px] font-black">0.00 ج.م</span>
               </button>
 
-              <button onclick="clearCart()" class="text-xs font-semibold text-rose-500 hover:text-rose-700 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors flex items-center gap-1">
+              <!-- 3. زر فواتير آخر 3 أيام والمرتجع -->
+              <button type="button" onclick="openRecentInvoicesModal()" class="px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm" title="فواتير آخر 3 أيام لعمل مرتجع">
+                <i class="fa-solid fa-rotate-left text-indigo-600"></i>
+                <span class="hidden sm:inline">المرتجع</span>
+              </button>
+
+              <!-- 4. زر تفريغ ومسح السلة -->
+              <button type="button" onclick="clearCart()" class="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all text-xs" title="مسح السلة الحالية">
                 <i class="fa-regular fa-trash-can"></i>
-                <span class="hidden sm:inline">مسح السلة</span>
               </button>
+
             </div>
           </div>
-
-          <div id="ddiAlertBanner" class="hidden m-3 p-3 rounded-xl border flex flex-col gap-1.5 text-xs transition-all"></div>
 
           <div class="p-3 flex-grow overflow-x-auto">
             <table id="cartTable" class="w-full text-right text-xs hidden">
@@ -944,7 +954,7 @@
     </div>
   </footer>
   <!-- شريط التنقل السفلي الذكي للموبايل (يظهر على الهواتف فقط) -->
-  <div id="mobileBottomBar" class="xl:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 shadow-lg flex items-center justify-around">
+  <div id="mobileBottomBar" class="hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 shadow-lg flex items-center justify-around">
     
     <!-- زر نقاط البيع -->
     <button type="button" onclick="switchView('posView')" id="mobTab-posView" class="mobile-nav-btn flex flex-col items-center justify-center p-1 text-brand-600 dark:text-brand-400 font-bold transition-all">
@@ -2130,8 +2140,95 @@
       </div>
     </div>
   </div>
+
+  <!-- 👇 هنا تلصق كود الشريط السفلي والدرج المنزلق 👇 -->
+
+  <!-- ==================== الشريط السفلي الموحد والدرج المنزلق للنواقص ==================== -->
+  <div id="unifiedBottomDock" class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-3 py-2 shadow-xl flex items-center justify-between">
+    <button type="button" onclick="toggleShortagesDrawer(true)" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-200 border border-teal-300 dark:border-teal-800 font-bold text-xs transition-all active:scale-95 shadow-sm">
+      <i class="fa-solid fa-boxes-packing text-teal-600 text-sm"></i>
+      <span>النواقص وطلبيات الموردين:</span>
+      <span id="dockShortagesBadge" class="bg-teal-600 text-white px-2 py-0.5 rounded-full font-mono text-[10px]">0 صنف</span>
+      <i class="fa-solid fa-chevron-up text-[10px] text-teal-600 mr-1 animate-bounce"></i>
+    </button>
+
+    <div class="flex items-center gap-1.5">
+      <button type="button" onclick="openExpenseModal()" class="px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm">
+        <i class="fa-solid fa-hand-holding-dollar"></i>
+        <span class="hidden sm:inline">سحب مصروف</span>
+      </button>
+
+      <button type="button" onclick="openBulkSupplyModal()" class="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm">
+        <i class="fa-solid fa-truck-ramp-box"></i>
+        <span class="hidden sm:inline">استلام شحنة</span>
+      </button>
+
+      <button type="button" onclick="openZReportModal()" class="px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm">
+        <i class="fa-solid fa-receipt"></i>
+        <span>تقفيل Z</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="drawerBackdrop" onclick="toggleShortagesDrawer(false)" class="hidden fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-xs transition-opacity"></div>
+
+  <div id="shortagesBottomDrawer" class="fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-slate-900 border-t-4 border-brand-500 rounded-t-3xl shadow-2xl transition-transform duration-300 ease-in-out translate-y-full max-h-[82vh] flex flex-col">
+    <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-3 flex-shrink-0">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950 text-teal-600 flex items-center justify-center font-bold">
+          <i class="fa-solid fa-truck-ramp-box text-base"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-black text-slate-900 dark:text-white">طلبية النواقص وأوامر الشراء المباشرة</h3>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300 border border-teal-300">
+              <span id="drawerShortagesCountBadge">0</span> صنف
+            </span>
+          </div>
+          <p class="text-[10px] text-slate-400">إرسال فوري للموزعين بنقرة واحدة عبر الواتساب أو الإكسيل</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="quickShareOrderWhatsApp()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm">
+          <i class="fa-brands fa-whatsapp text-sm"></i> إرسال واتساب
+        </button>
+        <button type="button" onclick="exportOrdersToExcelCSV()" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 font-bold text-xs flex items-center gap-1.5">
+          <i class="fa-solid fa-file-excel"></i> إكسيل
+        </button>
+        <button type="button" onclick="openOrderReportModal()" class="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-file-pdf"></i> تقرير PDF
+        </button>
+        <button type="button" onclick="toggleShortagesDrawer(false)" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-circle-xmark text-lg"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="flex-grow overflow-y-auto p-4">
+      <div class="border rounded-2xl overflow-hidden">
+        <table class="w-full text-right text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-800/80 sticky top-0">
+            <tr class="text-slate-500 border-b">
+              <th class="p-2.5 text-center w-12">#</th>
+              <th class="p-2.5">الصنف</th>
+              <th class="p-2.5">الكمية</th>
+              <th class="p-2.5">سبب الطلب</th>
+              <th class="p-2.5">الطالب</th>
+              <th class="p-2.5 text-center w-16">إجراء</th>
+            </tr>
+          </thead>
+          <tbody id="drawerShortagesTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-medium"></tbody>
+        </table>
+        <div id="noDrawerShortagesState" class="py-10 text-center text-slate-400 text-xs hidden">لا توجد نواقص مسجلة حالياً</div>
+      </div>
+    </div>
+  </div>
+  <!-- 👆 نهاية كود الدرج والشريط السفلي 👆 -->
+
   <!-- المحرك البرمجي الرئيسي المحدث -->
   <script>
+     // ... هنا يبدأ كود الجافاسكريبت القديم والجديد ...
     /**
      * ==================== محرك التوقيت المصري المركزي ====================
      */
@@ -2321,6 +2418,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       loadShiftState();
       setupBarcodeInterceptor();
       setupTheme();
+      refreshDrawerShortages();
       setupSearchInput();
       checkActiveSession();
       refreshShiftExpensesUI();
@@ -3566,7 +3664,7 @@ async function calculateAvailableStock(medCode) {
       return { boxes, strips, tablets, totalTablets };
     }
 
-   // ==================== محرك بحث الكاشير الذكي والفائق السرعة ====================
+// ==================== الدالة الجديدة المطورة والموحدة ====================
 let searchDebounceTimer = null;
 
 function setupSearchInput() {
@@ -3580,6 +3678,7 @@ function setupSearchInput() {
 
     if (!q) { 
       dropdown.classList.add("hidden"); 
+      dropdown.innerHTML = "";
       return; 
     }
 
@@ -3599,6 +3698,8 @@ function setupSearchInput() {
       }
 
       dropdown.innerHTML = "";
+
+      // حالة رقم 1: توجد أدوية متطابقة في المخزن
       if (matches.length > 0) {
         const codes = matches.map(m => m.code);
         const batches = await db.batches.where("medCode").anyOf(codes).toArray();
@@ -3609,39 +3710,200 @@ function setupSearchInput() {
 
         for (const m of matches) {
           const totalTablets = batchesMap[m.code] || 0;
-          const tabletsPerBox = (m.stripsPerBox || 1) * (m.tabletsPerStrip || 1);
-          const boxes = Math.floor(totalTablets / tabletsPerBox);
+          const stripsPerBox = m.stripsPerBox || 1;
+          const tabletsPerStrip = m.tabletsPerStrip || 1;
+          const tabletsPerBox = stripsPerBox * tabletsPerStrip;
 
-          const itemBtn = document.createElement("button");
-          itemBtn.type = "button";
-          itemBtn.className = "w-full text-right p-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between gap-2 text-xs transition-colors border-b";
-          itemBtn.innerHTML = `
-            <div>
-              <div class="font-bold text-slate-900 dark:text-white">${escapeHTML(m.name)}</div>
-              <div class="text-[10px] text-teal-600 font-bold flex items-center gap-1">
-                <i class="fa-solid fa-cubes-stacked text-[9px]"></i> المكان: ${escapeHTML(m.shelfLocation || 'غير محدد')}
+          // احتساب العلب والأشرطة والأقراص بدقة فيزياء المخزون
+          const boxes = Math.floor(totalTablets / tabletsPerBox);
+          const remTablets = totalTablets % tabletsPerBox;
+          const strips = Math.floor(remTablets / tabletsPerStrip);
+          const looseTablets = remTablets % tabletsPerStrip;
+
+          let stockText = `${boxes} علبة`;
+          if (strips > 0) stockText += ` و ${strips} شريط`;
+          if (looseTablets > 0) stockText += ` و ${looseTablets} قرص`;
+          if (totalTablets === 0) stockText = "0 (رصيد نافد)";
+
+          const isZeroStock = totalTablets === 0;
+
+          const itemCard = document.createElement("div");
+          itemCard.className = "w-full text-right p-3 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center justify-between gap-3 text-xs transition-colors border-b cursor-pointer select-none";
+          
+          itemCard.innerHTML = `
+            <div class="flex-grow">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-900 dark:text-white text-xs">${escapeHTML(m.name)}</span>
+                ${m.isControlled ? '<span class="text-[9px] px-1.5 py-0.2 rounded font-black bg-rose-100 text-rose-700 border border-rose-300">جدول</span>' : ''}
+              </div>
+              <div class="flex items-center gap-2 text-[10px] mt-0.5 text-slate-400">
+                <span class="text-teal-700 dark:text-teal-400 font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-cubes-stacked text-[9px]"></i> الرف: ${escapeHTML(m.shelfLocation || 'غير محدد')}
+                </span>
+                <span>•</span>
+                <span>${escapeHTML(m.scientificName || m.category || '')}</span>
               </div>
             </div>
-            <div class="text-left font-mono">
-              <span class="block font-bold text-slate-800 dark:text-slate-200">${m.boxPrice.toFixed(2)} ج.م</span>
-              <span class="text-[10px] text-slate-400">${boxes} علبة</span>
+
+            <div class="flex items-center gap-2 text-left">
+              <div class="font-mono">
+                <span class="block font-black text-slate-900 dark:text-white text-xs">${m.boxPrice.toFixed(2)} ج.م</span>
+                <span class="text-[10px] font-bold ${isZeroStock ? 'text-rose-600 animate-pulse' : 'text-brand-600'}">${escapeHTML(stockText)}</span>
+              </div>
+
+              <!-- أزرار الإجراءات السريعة (تعديل الرف والمخزن + تسجيل النقص الفوري) -->
+              <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+                ${isZeroStock ? `
+                  <button type="button" title="تسجيل سريع في النواقص" onclick="quickAddShortage('${escapeHTML(m.name)}', 'رصيد صفر بالمخزن');" class="px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] flex items-center gap-1 shadow-sm transition-all active:scale-95">
+                    <i class="fa-solid fa-plus text-[9px]"></i> نقص
+                  </button>
+                ` : ''}
+
+                <button type="button" title="تعديل سريع للصنف والرف والمخزون" onclick="openFullStockEditModal('${m.code}');" class="p-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 dark:bg-teal-950 dark:hover:bg-teal-900 dark:text-teal-300 border border-teal-200 dark:border-teal-800 text-xs transition-all">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+              </div>
             </div>
           `;
-          itemBtn.onclick = () => {
+
+          // عند النقر على الكارت: اختياره للبيع
+          itemCard.onclick = () => {
             selectMedicine(m);
             dropdown.classList.add("hidden");
+            dropdown.innerHTML = "";
             input.value = "";
           };
-          dropdown.appendChild(itemBtn);
+
+          dropdown.appendChild(itemCard);
         }
         dropdown.classList.remove("hidden");
-      } else {
-        dropdown.classList.add("hidden");
+      } 
+      // حالة رقم 2: الدواء غير مسجل إطلاقاً بالصيدلية
+      else {
+        dropdown.innerHTML = `
+          <div class="p-3 text-center bg-slate-50 dark:bg-slate-800/90 rounded-xl space-y-2">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+              <span>صنف غير مسجل في دليل الصيدلية</span>
+            </div>
+            <button type="button" onclick="quickAddShortage('${escapeHTML(q)}', 'صنف غير مسجل بالصيدلية - طلب عميل مباشر');" class="w-full bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all">
+              <i class="fa-solid fa-circle-plus"></i>
+              <span>أضف "${escapeHTML(q)}" للنواقص بنقرة واحدة</span>
+            </button>
+          </div>
+        `;
+        dropdown.classList.remove("hidden");
       }
     }, 200);
   });
+
+  // إغلاق القائمة عند النقر خارجها
+  document.addEventListener("click", (e) => {
+    if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.classList.add("hidden");
+    }
+  });
+}
+// ==================== 2. الدوال المساعدة للشريط السفلي والنواقص ====================
+
+// دالة 1: تسجيل النواقص بنقرة واحدة وتحديث العداد تلقائياً
+async function quickAddShortage(medName, reason = "طلب نقص سريع من شاشة البيع") {
+  if (!medName) return;
+
+  await db.cashier_shortages.add({
+    medName: medName,
+    qty: 3,
+    unit: "علبة",
+    reason: reason,
+    requestedBy: currentUser ? currentUser.name : "الكاشير",
+    date: getEgyptISODate(),
+    time: getEgyptTimeString(),
+    status: "تمت الموافقة"
+  });
+
+  showToast("تم تسجيل النقص", `تم إدراج (${medName}) في قائمة النواقص بنجاح`, "success");
+
+  // تفريغ مربع البحث وإخفاء القائمة
+  const dropdown = document.getElementById("searchDropdown");
+  if (dropdown) { 
+    dropdown.classList.add("hidden"); 
+    dropdown.innerHTML = ""; 
+  }
+  const searchInput = document.getElementById("medicineSearchInput");
+  if (searchInput) searchInput.value = "";
+
+  // تحديث عداد وقائمة الدرج السفلي فوراً
+  refreshDrawerShortages();
 }
 
+// دالة 2: فتح وإغلاق الشريط السفلي المنزلق (Bottom Drawer)
+function toggleShortagesDrawer(isOpen = null) {
+  const drawer = document.getElementById("shortagesBottomDrawer");
+  const backdrop = document.getElementById("drawerBackdrop");
+  if (!drawer) return;
+
+  const isCurrentlyOpen = !drawer.classList.contains("translate-y-full");
+  const shouldOpen = isOpen !== null ? isOpen : !isCurrentlyOpen;
+
+  if (shouldOpen) {
+    drawer.classList.remove("translate-y-full");
+    if (backdrop) backdrop.classList.remove("hidden");
+    refreshDrawerShortages();
+  } else {
+    drawer.classList.add("translate-y-full");
+    if (backdrop) backdrop.classList.add("hidden");
+  }
+}
+
+// دالة 3: قراءة النواقص من قاعدة البيانات وتحديث الجدول والـ Badge
+async function refreshDrawerShortages() {
+  const tbody = document.getElementById("drawerShortagesTableBody");
+  const countBadge = document.getElementById("drawerShortagesCountBadge");
+  const dockBadge = document.getElementById("dockShortagesBadge");
+  const noState = document.getElementById("noDrawerShortagesState");
+
+  // جلب النواقص المعتمدة
+  const approved = await db.cashier_shortages.where("status").equals("تمت الموافقة").toArray();
+  const totalCount = approved.length;
+
+  if (countBadge) countBadge.innerText = totalCount;
+  if (dockBadge) dockBadge.innerText = `${totalCount} صنف`;
+
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  if (totalCount === 0) {
+    if (noState) noState.classList.remove("hidden");
+  } else {
+    if (noState) noState.classList.add("hidden");
+    approved.slice().reverse().forEach((item, index) => {
+      const tr = document.createElement("tr");
+      tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 border-b";
+      tr.innerHTML = `
+        <td class="p-2.5 font-bold font-mono text-center text-slate-400">${index + 1}</td>
+        <td class="p-2.5 font-bold text-slate-900 dark:text-white">${escapeHTML(item.medName)}</td>
+        <td class="p-2.5 font-mono font-black text-brand-600">${item.qty} ${escapeHTML(item.unit)}</td>
+        <td class="p-2.5 text-slate-500 text-[11px]">${escapeHTML(item.reason)}</td>
+        <td class="p-2.5 font-sans text-slate-400 text-[10px]">${escapeHTML(item.requestedBy)}</td>
+        <td class="p-2.5 text-center">
+          <button type="button" onclick="removeDrawerShortage(${item.id})" class="text-rose-500 hover:text-rose-700 p-1 text-xs" title="حذف من النواقص">
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  if (typeof loadReorderData === "function") loadReorderData();
+}
+
+// دالة 4: حذف صنف من قائمة النواقص
+async function removeDrawerShortage(id) {
+  await db.cashier_shortages.delete(id);
+  showToast("تم الحذف", "تمت إزالة الصنف من قائمة النواقص", "info");
+  refreshDrawerShortages();
+}
   async function selectMedicine(med) {
       currentSelectedMed = med;
       const batches = await db.batches.where("medCode").equals(med.code).toArray();
