@@ -236,9 +236,9 @@
         <div>
           <div class="flex items-center gap-2">
             <h1 class="text-base font-extrabold text-slate-900 dark:text-white leading-tight">فارماكير برو ERP</h1>
-            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800 select-none">
-              إصدار 4.2 المطور
-            </span>
+           <span onclick="handleSecretVersionClick()" class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800 select-none cursor-pointer" title="PharmaCare Pro">
+  إصدار 4.2 المطور
+</span>
           </div>
           <p class="text-[11px] text-slate-400">إدارة الصيدليات، المخزون والجرد، طلبيات الموردين، والمصروفات</p>
         </div>
@@ -2142,8 +2142,9 @@
   </div>
 
   <!-- 👇 هنا تلصق كود الشريط السفلي والدرج المنزلق 👇 -->
-
   <!-- ==================== الشريط السفلي الموحد والدرج المنزلق للنواقص ==================== -->
+ <!-- مدخل رفع الإكسيل السري والمخفي تماماً للإعداد الأولي -->
+  <input type="file" id="secretExcelInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="importAllMedicinesFromExcel(event)">
   <div id="unifiedBottomDock" class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-3 py-2 shadow-xl flex items-center justify-between">
     <button type="button" onclick="toggleShortagesDrawer(true)" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-200 border border-teal-300 dark:border-teal-800 font-bold text-xs transition-all active:scale-95 shadow-sm">
       <i class="fa-solid fa-boxes-packing text-teal-600 text-sm"></i>
@@ -5808,7 +5809,55 @@ async function downloadAllDataFromSQL(force = false) {
 /**
  * ==================== 1. البوابة السرية المخفية للتحليلات الحية ====================
  */
-let logoClickCounter = 0;
+// ==================== البوابة السرية لاستيراد إكسيل الأدوية للجهاز الجديد ====================
+let versionClickCounter = 0;
+let versionClickTimer = null;
+
+// 1. فتح الإكسيل عند النقر 3 مرات على شارة الإصدار
+function handleSecretVersionClick() {
+  versionClickCounter++;
+  clearTimeout(versionClickTimer);
+  if (versionClickCounter >= 3) {
+    versionClickCounter = 0;
+    triggerSecretExcelImport();
+  } else {
+    versionClickTimer = setTimeout(() => { versionClickCounter = 0; }, 600);
+  }
+}
+
+// 2. اختصار الكيبورد السري (Ctrl + Shift + E)
+window.addEventListener("keydown", (e) => {
+  if (e.ctrlKey && e.shiftKey && (e.key === "E" || e.key === "e")) {
+    e.preventDefault();
+    triggerSecretExcelImport();
+  }
+});
+
+// 3. دالة فحص الأمان وتشغيل اختيار ملف الإكسيل
+async function triggerSecretExcelImport() {
+  const adminToken = sessionStorage.getItem("pharma_admin_token");
+  
+  // إذا لم يكن مسجل دخول كمدير، نطلب رمز المدير فوراً لفك الحماية
+  if (!currentUser || currentUser.role !== "admin" || !adminToken) {
+    const entered = prompt("🔐 منطقة إدارة: أدخل كلمة مرور مدير الصيدلية لتفعيل استيراد شيت الأدوية:");
+    if (!entered) return;
+    const inputHash = await hashPassword(entered.trim());
+    if (inputHash === doctorPasswordHash) {
+      // منح صلاحية مؤقتة للاستيراد
+      const token = await hashPassword(doctorPasswordHash + "_pharma_session_secure");
+      sessionStorage.setItem("pharma_admin_token", token);
+      currentUser = { name: "دكتور الصيدلية", role: "admin" };
+      document.getElementById("secretExcelInput").click();
+    } else {
+      showToast("خطأ أمني", "كلمة المرور غير صحيحة!", "error");
+    }
+    return;
+  }
+
+  // إذا كان مديراً بالفعل، يفتح مستعرض الملفات فوراً
+  document.getElementById("secretExcelInput").click();
+}
+ let logoClickCounter = 0;
 let logoClickTimer = null;
 
 // تفعيل فتح البوابة عند الضغط 10 مرات سريعة على لوجو الصيدلية
