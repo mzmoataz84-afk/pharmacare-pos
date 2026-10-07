@@ -4808,6 +4808,10 @@ async function loadManagerPendingShortages() {
 
 function setupBarcodeInterceptor() {
       window.addEventListener("keydown", (e) => {
+        if (e.ctrlKey && e.shiftKey && (e.key === "S" || e.key === "s")) {
+  e.preventDefault();
+  exportAllInventoryToExcel();
+}
         if (e.key === "F2") { 
           e.preventDefault(); 
           document.getElementById("medicineSearchInput").focus(); 
@@ -6092,6 +6096,45 @@ function clearStockFilterInput() {
   if (dropdown) { dropdown.innerHTML = ""; dropdown.classList.add("hidden"); }
   if (clearBtn) clearBtn.classList.add("hidden");
   loadAllMedicinesStock(true);
+}
+// دالة تصدير كامل دليل الأدوية والمخزن إلى ملف Excel / CSV
+async function exportAllInventoryToExcel() {
+  showToast("جارٍ التصدير", "يتم تجهيز بيانات المخزون بالكامل للتحميل...", "info");
+  
+  const allMeds = await db.medicines.toArray();
+  if (!allMeds || allMeds.length === 0) {
+    showToast("تنبيه", "لا توجد أدوية مسجلة لتصديرها!", "warning");
+    return;
+  }
+
+  // جلب كافة التشغيلات لاحتساب الرصيد الفعلي لكل صنف
+  const allBatches = await db.batches.toArray();
+  const batchesMap = {};
+  allBatches.forEach(b => {
+    batchesMap[b.medCode] = (batchesMap[b.medCode] || 0) + (b.totalTablets || 0);
+  });
+
+  // ترويسة ملف الإكسيل
+  let csv = "\uFEFFالكود,الباركود الدولي,اسم الدواء,المادة الفعالة,التصنيف,مكان الرف,الرصيد (علب),سعر البيع,سعر التكلفة,المورد\n";
+
+  allMeds.forEach(m => {
+    const totalTablets = batchesMap[m.code] || 0;
+    const tabletsPerBox = (m.stripsPerBox || 1) * (m.tabletsPerStrip || 1);
+    const boxes = Math.floor(totalTablets / tabletsPerBox);
+
+    csv += `"${m.code}","${m.barcode || ''}","${(m.name || '').replace(/"/g, '""')}","${(m.scientificName || '').replace(/"/g, '""')}","${m.category || ''}","${m.shelfLocation || ''}",${boxes},${Number(m.boxPrice || 0).toFixed(2)},${Number(m.boxCost || 0).toFixed(2)},"${m.preferredSupplier || ''}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `دليل_مخزون_الأدوية_${getEgyptISODate()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  showToast("اكتمل التصدير", `تم تنزيل ${allMeds.length} صنف دوائي بنجاح!`, "success");
 }
 </script>
 </body>
